@@ -87,6 +87,12 @@
               dy = -dy;
               b.status = 0;
               score++;
+              dx += 1;
+              if (dy > 0) {
+                dy += 1;
+              }
+              else { dy -= 1 }
+
               if (score == brickRowCount * brickColumnCount) {
                 alert("YOU WIN!");
                 document.location.reload();
@@ -160,6 +166,13 @@
       }
       else if (y + dy > canvas.height - ballRadius) {
         if (x > paddleX && x < paddleX + paddleWidth) {
+          var paddleMid = (((paddleX + paddleWidth) - paddleX) / 2) + paddleX
+          if (x > paddleMid) {
+            dx += 2
+          }
+          else {
+            dx -= 2
+          }
           dy = -dy;
         }
         else {
