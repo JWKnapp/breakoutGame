@@ -35,26 +35,49 @@
     var paddleX = (canvas.width - paddleWidth) / 2;
     var rightPressed = false;
     var leftPressed = false;
-    var brickRowCount = 3;
-    var brickColumnCount = 5;
-    var brickWidth = 75;
-    var brickHeight = 20;
-    var brickPadding = 10;
-    var brickOffsetTop = 30;
-    var brickOffsetLeft = 30;
     var score = 0;
     var lives = 3;
-    var bricks = [];
-    for (var c = 0; c < brickColumnCount; c++) {
-      bricks[c] = [];
-      for (var r = 0; r < brickRowCount; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1 };
+    var levelCount = 0;
+    var levels = [
+      { brickRowCount: 3, brickColumnCount: 5, brickWidth: 75, brickHeight: 20, brickPadding: 10, brickOffsetTop: 30, brickOffsetLeft: 30 },
+      { brickRowCount: 3, brickColumnCount: 5, brickWidth: 40, brickHeight: 20, brickPadding: 10, brickOffsetTop: 30, brickOffsetLeft: 30 },
+      { brickRowCount: 4, brickColumnCount: 8, brickWidth: 40, brickHeight: 20, brickPadding: 10, brickOffsetTop: 30, brickOffsetLeft: 30 },
+      { brickRowCount: 3, brickColumnCount: 5, brickWidth: 75, brickHeight: 20, brickPadding: 10, brickOffsetTop: 60, brickOffsetLeft: 30 },
+      4,
+      5]
+    var brickRowCount
+    var brickColumnCount
+    var brickWidth
+    var brickHeight
+    var brickPadding
+    var brickOffsetTop
+    var brickOffsetLeft
+    var brickHealth
+    var bricks
+
+    function gameBuild() {
+      brickRowCount = levels[levelCount].brickRowCount;
+      brickColumnCount = levels[levelCount].brickColumnCount;
+      brickWidth = levels[levelCount].brickWidth;
+      brickHeight = levels[levelCount].brickHeight;
+      brickPadding = levels[levelCount].brickPadding;
+      brickOffsetTop = levels[levelCount].brickOffsetTop;
+      brickOffsetLeft = levels[levelCount].brickOffsetLeft;
+      brickHealth = levelCount + 1;
+      var gameBoard = []
+      for (var c = 0; c < brickColumnCount; c++) {
+        gameBoard[c] = [];
+        for (var r = 0; r < brickRowCount; r++) {
+          gameBoard[c][r] = { x: 0, y: 0, status: brickHealth };
+        }
       }
+      return gameBoard
     }
 
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler, false);
+
     function keyDownHandler(evt) {
       if (evt.keyCode == 39) {
         rightPressed = true;
@@ -82,21 +105,16 @@
       for (var c = 0; c < brickColumnCount; c++) {
         for (var r = 0; r < brickRowCount; r++) {
           var b = bricks[c][r];
-          if (b.status == 1) {
+          if (b.status > 0) {
             if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
               dy = -dy;
-              b.status = 0;
+              b.status--;
               score++;
               dx += 1;
               if (dy > 0) {
                 dy += 1;
               }
               else { dy -= 1 }
-
-              if (score == brickRowCount * brickColumnCount) {
-                alert("YOU WIN!");
-                document.location.reload();
-              }
             }
           }
         }
@@ -110,6 +128,7 @@
       ctx.fill();
       ctx.closePath();
     }
+
     function drawPaddle() {
       ctx.beginPath();
       ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
@@ -120,16 +139,21 @@
 
     function drawBricks() {
       for (var c = 0; c < brickColumnCount; c++) {
-
         for (var r = 0; r < brickRowCount; r++) {
-          if (bricks[c][r].status == 1) {
+          if (bricks[c][r].status > 0) {
             var brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
             var brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
             bricks[c][r].x = brickX;
             bricks[c][r].y = brickY;
             ctx.beginPath();
             ctx.rect(brickX, brickY, brickWidth, brickHeight);
-            ctx.fillStyle = "#0095DD";
+            //need more health logic
+            if (bricks[c][r].status > levelCount) {
+              ctx.fillStyle = "#0095DD";
+            }
+            else if (bricks[c][r].status == levelCount) {
+              ctx.fillStyle = "red"
+            }
             ctx.fill();
             ctx.closePath();
           }
@@ -150,14 +174,29 @@
     }
 
 
+    // draw function acts like game manager
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (score == 0) {
+        bricks = gameBuild()
+      }
       drawBricks();
       drawBall();
       drawPaddle();
       drawScore();
       drawLives();
       collisionDetection();
+      if (score == brickRowCount * brickColumnCount * brickHealth) {
+        score = 0
+        levelCount += 1
+        lives = 3
+        bricks = gameBuild()
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = 3;
+        dy = -3;
+        paddleX = (canvas.width - paddleWidth) / 2;
+      }
       if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
         dx = -dx;
       }
